@@ -14,7 +14,12 @@ def connet(ip, port):
     p = remote(ip, port)
     pwd = "Sakura"
     \rtn = ' '             #gamebox固定返回
-    p.sendline(pwd)
+    try:
+        p.sendline(pwd)
+    except IOError :
+        print "pwd IO Error"
+    except:
+        print "Unexpected error"
     recv = p.recv()
     if recv == rtn：
         print 'Connect Success'
@@ -24,7 +29,12 @@ def flush():
     teamid = getteamid()
     flag = 'flag{' + sha256(teamid + now_round * 5 + 'Vidar_Team' * 5) + '}'
     payload = 'echo ' + '"' + flag + '" ' + '> ' + 'flag.txt'
-    p.sendline(payload)
+    try:
+        p.sendline(pwd)
+    except IOError :
+        print "flag IO Error"
+    except:
+        print "Unexpected error"
 
 def round_check():
     while True:
@@ -35,7 +45,7 @@ def round_check():
             old_round = now_round
             return False
 
-def check(ip):   #多线程
+def check(ip):   
     try:
         delay = random.randint(10,180)
         time.sleep(delay)
