@@ -2,6 +2,7 @@ from pwn import *
 import hashlib
 import time
 import random
+import thread
 
 def sha256(str):
     m = hashlib.sha256()   
@@ -34,40 +35,49 @@ def round_check():
             old_round = now_round
             return False
 
+def check(ip):   #多线程
+    try:
+        delay = random.randint(10,180)
+        time.sleep(delay)
+        name = ['web1' , 'web2' , 'pwn1' , 'pwn2']
+        for index in range len(name):
+            if name[index] == 'web1':
+                ok = webcheck1(ip)
+            if name[index] == 'web2':
+                ok = webcheck2(ip)
+            if name[index] == 'pwn1':
+                ok = pwncheck1(ip)
+            if name[index] == 'pwn2':
+                ok = pwncheck2(ip)
+            if ok == False:
+                print "down:",name,":",ip 
+    except IOError :
+        print name ":IO Error"
+    except:
+        print "Unexpected error"
+
+def checker():
+    try:
+        for ip in range len(ip):
+            thread.start_new_thread( check , ip[len])
+    except:
+        print "Error: unable to start thread"
+
 def is_OK(ip , port):
     if connet(ip , port) == True:
         while True:
             if round_check() == False:
                 flush()
-                check()
+                checker()
     else:
         connet(ip , port)
         print 'again'
         is_OK(ip,port)
 
-def check(ip):   #多线程
-    delay = random.randint(10,180)
-    time.sleep(delay)
-    name = ['web1' , 'web2' , 'pwn1' , 'pwn2']
-    for index in range len(name):
-        if name[index] == 'web1':
-            ok = webcheck1(ip)
-        if name[index] == 'web2':
-            ok = webcheck2(ip)
-        if name[index] == 'pwn1':
-            ok = pwncheck1(ip)
-        if name[index] == 'pwn2':
-            ok = pwncheck2(ip)
-        if ok == False:
-            print "down:",name,":",ip 
-
-def scp(yourfile,ip,port):
-    connet(ip,port)
-    road = 'root@' + ip + '/tmp'
-    payload = 'scp ' + yourfile + ' ' + road
-    p.sendline(payload)
-
 def bash(opt,ip,port):
     connet(ip,port)
     payload = opt
     p.sendline()
+
+
+ip = []
