@@ -1,69 +1,47 @@
-from pwn import *
-import hashlib
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
+import requests
 import time
+import logging
+import threading
 import random
-import thread
+from core.log import logger
+from core.log import log
 
-def sha256(str):
-    m = hashlib.sha256()   
-    m.update(str)
-    return m.hexdigest()
+iplist = ['127.0.0.1']
+name = ['web1' , 'web2' , 'pwn1' , 'pwn2']
+port = 80
+round_time = 60
+timeout = 3
+Retrys = 2
 
-def connet(ip, port):
-    ip = "'" + ip + "'"
-    p = remote(ip, port)
-    pwd = "Sakura"
-    \rtn = ' '             #gamebox固定返回
-    try:
-        p.sendline(pwd)
-    except IOError :
-        print "pwd IO Error"
-    except:
-        print "Unexpected error"
-    recv = p.recv()
-    if recv == rtn：
-        print 'Connect Success'
-    return True
+bool ok
 
-def flush():
-    teamid = getteamid()
-    flag = 'flag{' + sha256(teamid + now_round * 5 + 'Vidar_Team' * 5) + '}'
-    payload = 'echo ' + '"' + flag + '" ' + '> ' + 'flag.txt'
-    try:
-        p.sendline(pwd)
-    except IOError :
-        print "flag IO Error"
-    except:
-        print "Unexpected error"
+def run(ip):
+    logger.info("Start check %s" %ip)
+    for i in xrange(Retrys):
+        try:
+            for index in range(len(name)):
+                if name[index] == 'web1':
+                    ok = webcheck1(ip)
+                elif name[index] == 'web2':
+                    ok = webcheck2(ip)
+                elif name[index] == 'pwn1':
+                    ok = pwncheck1(ip)
+                elif name[index] == 'pwn2':
+                    ok = pwncheck2(ip)
 
-def round_check():
-    while True:
-        now_round = getround()   #从平台获取round
-        if now_round == old_round:
-            time.sleep(1)
-        else:
-            old_round = now_round
-            return False
+                if ok == False:
+                    logger.warn("Check for %s : %s Failure" % (ip , name[index]))
+                else:
+                    logger.debug("Check for %s : %s Success" % (ip , name[index]))
+        except requests.exceptions.ConnectTimeout:
+            logger.warn("Time out !!!")
+            continue
+        except:
+            logger.warn("Unexpected Error")
+            continue
 
-def is_OK(ip , port):
-    if connet(ip , port) == True:
-        while True:
-            if round_check() == False:
-                flush()
-    else:
-        connet(ip , port)
-        print 'again'
-        is_OK(ip,port)
-
-def bash(opt,ip,port):
-    connet(ip,port)
-    payload = opt
-    p.sendline()
-
-thread.start_new_thread(is_OK , ip , port)
-while True:
-    opt = raw_input("Your opt")
-    thread.start_new_thread(bash , ip , port , opt)
-
-ip = []
-
+def main():
+    
