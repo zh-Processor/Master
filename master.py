@@ -27,28 +27,33 @@ def connect(ip):
     ip = "'" + ip + "'"
     flag = "hctf{" + sha256(round + "f33601c10397b25e789c85bce5f2fbfd") + "}"
     payload = 'echo ' + '"' + flag + '" ' + '> ' + 'flag.txt'
-    logger.info("Start connect %s" % ip)
-    try:
-        p = remote(ip , port)
-    except requests.exceptions.ConnectTimeout:
-        logger.warn("Time out !!!")
-        continue
-    except:
-        logger.warn("Unexpected Error")
-        continue
 
-    logger.info("Start flush %s" % ip)
-    try:
-        p.sendline(payload)
-    except requests.exceptions.ConnectTimeout:
-        logger.warn("Time out !!!")
-        continue
-    except IOError:
-        logger.warn("IOError!")
-        continue
-    except:
-        logger.warn("Unexpected Error")
-        continue
+    logger.info("Start connect %s" % ip)
+
+    for j in xrange(Retrys):
+        try:
+            p = remote(ip , port)
+        except requests.exceptions.ConnectTimeout:
+            logger.warn("Time out !!!")
+            continue
+        except:
+            logger.warn("Unexpected Error")
+            continue
+
+        logger.info("Start flush %s" % ip)
+
+        try:
+            p.sendline(payload)
+            break
+        except requests.exceptions.ConnectTimeout:
+            logger.warn("Time out !!!")
+            continue
+        except IOError:
+            logger.warn("IOError!")
+            continue
+        except:
+            logger.warn("Unexpected Error")
+            continue
 
 def check(ip):
     logger.info("Start check %s" %ip)
@@ -68,6 +73,7 @@ def check(ip):
                     logger.warn("Check for %s : %s Failure" % (ip , name[index]))
                 else:
                     logger.debug("Check for %s : %s Success" % (ip , name[index]))
+            break
         except requests.exceptions.ConnectTimeout:
             logger.warn("Time out !!!")
             continue
