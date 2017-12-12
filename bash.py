@@ -4,6 +4,7 @@ import time
 import logging
 import threading
 import random
+import traceback
 from log import logger
 from log import log
 
@@ -15,23 +16,25 @@ timeout = 3
 def bash(ip):
     for j in xrange(Retrys):
         try:
-            p = remote(ip , port)
+            ipip = "'" + ip + "'"
+            p = remote(ipip , port)
         except requests.exceptions.ConnectTimeout:
-            logger.warn("Bash opt Time out when login !!!")
+            logger.warn("[BASH] [{}] Time out".format(ip))
             continue
         except:
-            logger.warn("Unexpected Error when Bash opt")
+            logger.warn("[BASH] [{}] Unexpected Error when Bash opt".format(ip))
+            traceback.print_exc()
             continue
-    opt = raw_input("Your opt:")
 
     for i in xrange(Retrys):
         try:
             p.sendline(opt)
         except requests.exceptions.ConnectTimeout:
-            logger.warn("Bash opt Time out when sendline!!!")
+            logger.warn("[BASH] [{}] Time out ".format(ip))
             continue
         except:
-            logger.warn("Unexpected Error when Bash opt")
+            logger.warn("[BASH] [{}] Unexpected Error".format(ip))
+            traceback.print_exc()
             continue
 
 def opt():
@@ -43,9 +46,11 @@ def opt():
 			threads_bash.append(w)
 		except:
 			logger.error("Thread error...")
+            traceback.print_exc()
 
 def main():
     while 1:
+        opt = raw_input("Your opt:")
         opt()
 
 if __name__ == '__main__':
