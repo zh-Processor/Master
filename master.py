@@ -13,7 +13,6 @@ from pwn import *
 iplist = ['127.0.0.1']
 name = ['web1' , 'web2' , 'pwn1' , 'pwn2']
 port = 80
-round_time = 60
 timeout = 3
 Retrys = 2
 max_round = 100
@@ -23,7 +22,7 @@ def sha256(str):
     m.update(str)
     return m.hexdigest()
 
-def connect(ip):
+def connectip(ip):
     ip = "'" + ip + "'"
     flag = "hctf{" + sha256(round + "f33601c10397b25e789c85bce5f2fbfd") + "}"
     payload = 'echo ' + '"' + flag + '" ' + '> ' + 'flag.txt'
@@ -34,10 +33,10 @@ def connect(ip):
         try:
             p = remote(ip , port)
         except requests.exceptions.ConnectTimeout:
-            logger.warn("Time out !!!")
+            logger.warn("Time out when connect!!!")
             continue
         except:
-            logger.warn("Unexpected Error")
+            logger.warn("Unexpected Error when connect")
             continue
 
         logger.info("Start flush %s" % ip)
@@ -46,13 +45,13 @@ def connect(ip):
             p.sendline(payload)
             break
         except requests.exceptions.ConnectTimeout:
-            logger.warn("Time out !!!")
+            logger.warn("Time out when flush flag!!!")
             continue
         except IOError:
             logger.warn("IOError!")
             continue
         except:
-            logger.warn("Unexpected Error")
+            logger.warn("Unexpected Error when flush flag")
             continue
 
 def check(ip):
@@ -91,11 +90,11 @@ def main():
             threads_connect = []
             for ip in iplist:
         		try:
-        			w = threading.Thread(target=connect, name='thread for %s' % ip, args=(ip,))
+        			w = threading.Thread(target=connectip, name='thread for %s' % ip, args=(ip,))
         			w.start()
         			threads_connect.append(w)
         		except:
-        			logger.error("Thread error...")
+        			logger.error("Thread error when connect...")
 
             for w in threads_connect:
                 w.join()
@@ -109,7 +108,7 @@ def main():
     				t.start()
     				threads_check.append(t)
     			except:
-    				logger.error("Thread error...")
+    				logger.error("Thread error when check...")
 
             for t in threads_check:
     			t.join()
