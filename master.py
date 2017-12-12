@@ -17,7 +17,7 @@ import json
 #timeout：超时时间
 #Retrys：重试次数
 #team0:{name , pwn1 , pwn2 , web1 , web2 , sql_username , sql_password}
-#line 53 , line 74 需添加地址
+#line 53 , line 75 需添加地址
 
 
 
@@ -71,7 +71,8 @@ def buff(team_name,challenge_name):
     for i in range(Retrys):
         try:
             s = requests.Session()
-            r = s.get("http://xxxx/System/setServerStatus?teamName={}&challengeName={}&status={}").format(team_name , challenge_name , status)
+            data = {"teamName": team_name, "challengeName": challenge_name, "status": status}
+            r = s.post("http://xxxx/System/setServerStatus", data=data)
             if r.status_code == 200:
                 content = r.content
                 logger.info("[POST] Post buff sucess")
