@@ -10,7 +10,18 @@ from log import logger
 from log import log
 from pwn import *
 import traceback
+import json
 
+#datebase:数据库名
+#port：gamebox给主控开放的端口
+#timeout：超时时间
+#Retrys：重试次数
+#team0:{name , pwn1 , pwn2 , web1 , web2 , sql_username , sql_password}
+#line 53 , line 74 需添加地址
+
+
+
+datebase = ''
 port = 80
 timeout = 3
 Retrys = 2
@@ -35,7 +46,48 @@ def sha256(str):
     m.update(str)
     return m.hexdigest()
 
+def getround():
+    for i in range(Retrys):
+        try:
+            s = requests.Session()
+            r = s.get("http://xxxx/System/info")
+            if r.status_code == 200:
+                content = r.content
+                logger.info("[ROUND] Get round sucess")
+            else:
+                logger.error("[ROUND] Get round failure")
+        except requests.exceptions.ConnectTimeout:
+            logger.warn("[ROUND] Time out ")
+            continue
+        except:
+            logger.warn("[ROUND] Unexpected Error")
+            traceback.print_exc()
+            continue
+    result = json.load(content)
+    return result[round]
+
+
+def buff(team_name,challenge_name):
+    for i in range(Retrys):
+        try:
+            s = requests.Session()
+            r = s.get("http://xxxx/System/setServerStatus?teamName={}&challengeName={}&status={}").format(team_name , challenge_name , status)
+            if r.status_code == 200:
+                content = r.content
+                logger.info("[POST] Post buff sucess")
+            else:
+                logger.error("[POST] Post buff failure")
+        except requests.exceptions.ConnectTimeout:
+            logger.warn("[POST] Time out ")
+            continue
+        except:
+            logger.warn("[POST] Unexpected Error")
+            traceback.print_exc()
+            continue
+
 def connectip(ip):
+    global database
+
     if ip in pwn1list:
         challenge_name = "pwn1"
         challenge_port = pwn1_port
@@ -65,7 +117,7 @@ def connectip(ip):
             logger.warn("[FLUSH] [{}] Time out ".format(ip))
             continue
         except:
-            logger.warn("[FLASH] [{}] Unexpected Error when connect".format(ip))
+            logger.warn("[FLASH] [{}] Unexpected Error".format(ip))
             traceback.print_exc()
             continue
 
@@ -104,6 +156,11 @@ def connectip(ip):
 
 def check(ip):
     logger.info("Start check %s" %ip)
+    for index in range(len(team)):
+        if ip in team[index]:
+            team_name = team[index][0]
+            now_team = team[index]
+
     for i in xrange(Retrys):
         try:
             for index in range(len(name)):
@@ -119,8 +176,12 @@ def check(ip):
 
                     if ok == False:
                         logger.warn("[CHECK] [{}] Check {} Failure" .format(ip , name[index]))
+                        status = 'down'
+                        buff(now_team , name[index] , status)
                     else:
                         logger.debug("[CHECK] [{}] Check {} Success".format(ip , name[index]))
+                        status = 'up'
+                        buff(now_team , name[index] , status)
                 except:
                     logger.warning("[CHECK] [{}] [{}] Error....".format(ip , name[index]))
                     traceback.print_exc()
