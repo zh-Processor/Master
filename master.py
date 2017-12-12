@@ -227,12 +227,12 @@ def main():
                     traceback.print_exc()
 
             for t in threads_check:
-    			t.join()
+                t.join()
 
             logger.info("Round %s is finished" % round)
             if round >= max_round:
-    			logger.warn("All round finished...")
-    			break
+                logger.warn("All round finished...")
+                break
 
 if __name__ == '__main__':
     main()

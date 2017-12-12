@@ -40,12 +40,12 @@ def bash(ip):
 def opt():
     threads_bash = []
     for ip in iplist:
-		try:
-			w = threading.Thread(target=bash, name='thread for %s' % ip, args=(ip,))
-			w.start()
-			threads_bash.append(w)
-		except:
-			logger.error("Thread error...")
+        try:
+            w = threading.Thread(target=bash, name='thread for %s' % ip, args=(ip,))
+            w.start()
+            threads_bash.append(w)
+        except:
+            logger.error("Thread error...")
             traceback.print_exc()
 
 def main():
