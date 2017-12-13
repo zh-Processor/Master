@@ -16,18 +16,21 @@ import json
 #port：gamebox给主控开放的端口
 #timeout：超时时间
 #Retrys：重试次数
-#team0:{name , pwn1 , pwn2 , web1 , web2 , sql_username , sql_password}
+#team0:{name , pwn1 , pwn2 , web1 , web2 , sql_username , sql_password , pwn1_down , pwn2_down , web1_down , web2_down}
 #line 53 , line 75 需添加地址
 
 
-
+max_rank = 2000
+mul = 1.2
+per_rank = 500
 datebase = ''
 port = 80
 timeout = 3
 Retrys = 2
 max_round = 100
-team0 = ['vidar' , '127.0.0.1' , '127.0.0.1' ,'127.0.0.1' ,'127.0.0.1' ,'username' , 'password']
+team0 = ['vidar' , '127.0.0.1' , '127.0.0.1' ,'127.0.0.1' ,'127.0.0.1' ,'username' , 'password' , 0 , 0 , 0 , 0]
 
+token = 'mDktXt32gPdO9C*4G%JO*nMi^9C7$mzR'
 name = ['web1' , 'web2' , 'pwn1' , 'pwn2']
 team = [team0 ,team1 ,team2 ,team3 ,team4 ,team5 ,team6 ,team7 ,team8 ,team9]
 pwn1list = []
@@ -45,6 +48,30 @@ def sha256(str):
     m = hashlib.sha256()   
     m.update(str)
     return m.hexdigest()
+
+def rank(teamname):
+    inc = per_rank
+    for i in range(down_round):
+        inc = inc * mul
+    if inc >= max_rank:
+        inc = max_rank
+    for j in range(Retrys):
+        try:
+            s = requests.Session()
+            data = {"teamName": teamname, "inc": inc}
+            r = s.post("http://xxxx/Team/incScore",data = data)
+            if r.status_code == 200:
+                content = r.content
+                logger.info("[Rank] Post rank sucess")
+            else:
+                logger.error("[Rank] Post rank failure")
+        except requests.exceptions.ConnectTimeout:
+            logger.warn("[Rank] Time out ")
+            continue
+        except:
+            logger.warn("[Rank] Unexpected Error")
+            traceback.print_exc()
+            continue
 
 def getround():
     for i in range(Retrys):
@@ -71,7 +98,7 @@ def buff(team_name,challenge_name):
     for i in range(Retrys):
         try:
             s = requests.Session()
-            data = {"teamName": team_name, "challengeName": challenge_name, "status": status}
+            data = {"teamName": team_name, "challengeName": challenge_name, "status": status, "token": token}
             r = s.post("http://xxxx/System/setServerStatus", data=data)
             if r.status_code == 200:
                 content = r.content
@@ -164,31 +191,40 @@ def check(ip):
 
     for i in xrange(Retrys):
         try:
-            for index in range(len(name)):
-                try:
-                    if name[index] in web1list:
-                        ok = webcheck1(ip)
-                    elif name[index] in web2list:
-                        ok = webcheck2(ip)
-                    elif name[index] in pwn1list:
-                        ok = pwncheck1(ip)
-                    elif name[index] in pwn2list:
-                        ok = pwncheck2(ip)
-
-                    if ok == False:
-                        logger.warn("[CHECK] [{}] Check {} Failure" .format(ip , name[index]))
-                        status = 'down'
-                        buff(now_team , name[index] , status)
-                    else:
-                        logger.debug("[CHECK] [{}] Check {} Success".format(ip , name[index]))
-                        status = 'up'
-                        buff(now_team , name[index] , status)
-                except:
-                    logger.warning("[CHECK] [{}] [{}] Error....".format(ip , name[index]))
-                    traceback.print_exc()
+            if ip in web1list:
+                ok = webcheck1(ip)
+                name_1 = 'web1'
+                index_1 = 9
+            elif ip in web2list:
+                ok = webcheck2(ip)
+                name_1 = 'web2'
+                index_1 = 10
+            elif ip in pwn1list:
+                ok = pwncheck1(ip)
+                name_1 = 'pwn1'
+                index_1 = 7
+            elif ip in pwn2list:
+                ok = pwncheck2(ip)
+                name_1 = 'pwn2'
+                index_1 = 8
+            
+            if ok == False:
+                logger.warn("[CHECK] [{}] Check {} Failure" .format(ip , name_1))
+                status = 'down'
+                buff(now_team , name[index] , status) 
+                team[index][index_1] += 1
+                rank(team[index][0])
+            else:
+                logger.debug("[CHECK] [{}] Check {} Success".format(ip , name_1))
+                status = 'up'
+                buff(now_team , name[index] , status)
+                team[index][index_1] = 0
+        except:
+            logger.warning("[CHECK] [{}] [{}] Error....".format(ip , name_1))
+            traceback.print_exc()
             break
         except requests.exceptions.ConnectTimeout:
-            logger.warn("[CHECK] [{}] [{}] Time out".format(ip , name[index]))
+            logger.warn("[CHECK] [{}] [{}] Time out".format(ip , name_1))
             continue
         except:
             logger.warn("Unexpected Error")
